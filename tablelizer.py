@@ -39,9 +39,9 @@ class Tablelizer(object):
                     self.maxSizeList[index] = len(column)
 
 
-
 class TablelizerTerminal(Tablelizer):
     def __init__(self):
+        super(TablelizerTerminal, self).__init__()
         self.config = {
                             "columnMarginSize":1, 
                             "rowSeparatorChar":"-", 
@@ -159,6 +159,7 @@ class TablelizerTerminal(Tablelizer):
 
 class TablelizerHtml(Tablelizer):
     def __init__(self):
+        super(TablelizerHtml, self).__init__()
         self.footerList = []
         self.config =   {
                             "tableStyle":"",
@@ -239,6 +240,7 @@ class TablelizerHtml(Tablelizer):
 
 class TablelizerMediaWiki(Tablelizer):
     def __init__(self):
+        super(TablelizerMediaWiki, self).__init__()
         self.classList = ["wikitable"]
 
     def getString(self):
