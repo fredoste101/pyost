@@ -4,6 +4,11 @@ import string
 
 
 class BashSSHSession:
+    """
+        Class for creating a ssh-session to a server using bash-shell.
+        Commands for sending bash-commands, and hadling their output.
+    """
+
     def __init__(self):
         self.ip             = ""
         self.user           = ""
@@ -23,6 +28,11 @@ class BashSSHSession:
 
 
     def createRandomPrompt(self):
+        """
+            Create a random prompt to match against in other commands.
+            This is to see when output from a command has reached its end.
+        """
+
         pool = string.letters + string.digits
 
         self.prompt = "".join(randomChoice(pool) for i in xrange(40)) + ":" 
@@ -33,6 +43,11 @@ class BashSSHSession:
 
 
     def executeCommand(self, command):
+        """
+            Execute given command (string).
+            Returns the output as well as the return status of the command (0 - True, other - False)
+        """
+
         self.ssh.sendline(command)
 
         self.ssh.expect(self.prompt)        
