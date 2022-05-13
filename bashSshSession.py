@@ -46,20 +46,21 @@ class BashSSHSession:
         """
             Execute given command (string).
             Returns the output as well as the return status of the command (0 - True, other - False)
+            in a tuple!
         """
 
         self.ssh.sendline(command)
 
         self.ssh.expect(self.prompt)        
 
-        output = self.getCommandOutput() 
+        output = self.__getCommandOutput() 
 
-        returnStatus = self.getCommandStatus()
+        returnStatus = self.__getCommandStatus()
 
         return (output, returnStatus)
 
 
-    def getCommandOutput(self):
+    def __getCommandOutput(self):
         outputList = self.ssh.before.split(self.newLineString)
 
         output = ""
@@ -70,12 +71,16 @@ class BashSSHSession:
         return output
 
 
-    def getCommandStatus(self):
+    def __getCommandStatus(self):
+        """
+            Returns True if command returned with status 0.
+            Returns False otherwise.
+        """
         self.ssh.sendline("echo $?")
 
         self.ssh.expect(self.prompt)
 
-        output = self.getCommandOutput()
+        output = self.__getCommandOutput()
     
         retstat = False
 

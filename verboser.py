@@ -29,6 +29,8 @@ class Verboser:
         if level not in self.__infoLevelList:
             self.__infoLevelList.append(level)
 
+    def removeInfoLevel(self, level):
+        self.__infoLevelList.remove(level)
 
     def getTimeStringNow(self):
         return str(datetime.datetime.now().isoformat(sep=" ")) 
@@ -86,7 +88,9 @@ class Verboser:
 
         if level not in self.__debugLevelList:
             self.__debugLevelList.append(level)        
-         
+        
+    def removeDebugLevel(self, level):
+        self.__debugLevelList.remove(level) 
 
 
 if __name__ == "__main__":
@@ -106,3 +110,5 @@ if __name__ == "__main__":
     verboser.success("yes it worked")
     verboser.addDebugLevel(0)
     verboser.debug("debuging")
+    verboser.removeInfoLevel(1)
+    verboser.info("hello?", 1)
