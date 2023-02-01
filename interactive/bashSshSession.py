@@ -6,58 +6,82 @@ import string
 class BashSSHSession:
     """
         Class for creating a ssh-session to a server using bash-shell.
-        Commands for sending bash-commands, and hadling their output.
+        Commands for sending bash-commands, and handling their output.
     """
 
     def __init__(self):
         self.ip             = ""
         self.user           = ""
         self.password       = ""
-        self.prompt         = ""
+        self.__prompt       = ""
         self.newLineString  = "\r\n"
+
+        self.__commandStatusList = []
+        self.__commandOutputList = []
+
+        self.ssh = None
 
 
     def start(self):
+        """
+            Starts a ssh session to a remote host using ip, user, and password.
+        """
+        
         self.ssh = pexpect.spawn("ssh " + self.user + "@" + self.ip)
 
         self.ssh.expect("password:")
 
         self.ssh.sendline(self.password)
 
-        self.createRandomPrompt()
+        #TODO: wait some time, and then check if password was ok.
+
+        self.__createRandomPrompt()
 
 
-    def createRandomPrompt(self):
+    def __createRandomPrompt(self):
         """
             Create a random prompt to match against in other commands.
             This is to see when output from a command has reached its end.
         """
 
-        pool = string.letters + string.digits
+        pool = string.ascii_letters + string.digits
 
-        self.prompt = "".join(randomChoice(pool) for i in xrange(40)) + ":" 
+        self.__prompt = "".join(randomChoice(pool) for i in range(40)) + ":" 
         
-        self.ssh.sendline("PS1=" + self.prompt)
+        self.ssh.sendline("PS1=" + self.__prompt)
     
-        self.ssh.expect("\r\n" + self.prompt)
+        self.ssh.expect(self.newLineString + self.__prompt)
 
 
     def executeCommand(self, command):
         """
             Execute given command (string).
             Returns the output as well as the return status of the command (0 - True, other - False)
-            in a tuple!
+            in a tuple (output, status)
         """
 
         self.ssh.sendline(command)
 
-        self.ssh.expect(self.prompt)        
+        self.ssh.expect(self.__prompt)        
 
         output = self.__getCommandOutput() 
 
+        self.__commandOutputList.append(output)
+
         returnStatus = self.__getCommandStatus()
 
+        self.__commandStatusList.append(returnStatus)
+
         return (output, returnStatus)
+
+
+    def exit(self):
+        """
+            Exit the ssh session
+        """
+        self.ssh.sendline("exit")
+
+        self.ssh = None
 
 
     def __getCommandOutput(self):
@@ -78,7 +102,7 @@ class BashSSHSession:
         """
         self.ssh.sendline("echo $?")
 
-        self.ssh.expect(self.prompt)
+        self.ssh.expect(self.__prompt)
 
         output = self.__getCommandOutput()
     

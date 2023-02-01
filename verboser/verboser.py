@@ -1,7 +1,9 @@
 
-from eprint import eprint
-from termColor import TermColor
+from pyost.eprint.eprint import eprint
+from pyost.termColor.termColor import TermColor
+
 import datetime
+        
 
 class Verboser:
     """
@@ -12,14 +14,21 @@ class Verboser:
     """
 
     def __init__(self):
-        self.__infoLevelList    = [] #to enable certain info-prints of given level, must add that level (int) to this list
-        self.__debugLevelList   = [] #same as info but for debug
-        self.enableError        = True #Errors are enabled per default 
+        self.__infoLevelList    = []        #to enable certain info-prints of given level, must add that level (int) to this list
+        self.__debugLevelList   = []        #same as info but for debug
+
+        self.enableError        = True      #Errors are enabled per default 
         self.enableWarning      = False 
         self.enableSuccess      = False
-        self.inColor            = False #Print with color-codes
-        self.withTime           = False #Each pring will include a isoformat time 
+        self.inColor            = False     #Print with color-codes
+        self.withTime           = False     #Each pring will include a isoformat time 
         self.termColor          = TermColor()        
+
+        self.saveToHistory      = False #If True will not print messages to terminal directly, but instead
+                                        #append them to a historyList, that can be printed later on.
+        self.__messageHistoryStringList = []
+
+        self.__verboseDict = {} # "nameOfTrace": {"color":"<color>"}
 
 
     def addInfoLevel(self, level):
@@ -29,8 +38,11 @@ class Verboser:
         if level not in self.__infoLevelList:
             self.__infoLevelList.append(level)
 
+
     def removeInfoLevel(self, level):
-        self.__infoLevelList.remove(level)
+        if level in self.__infoLevelList:
+            self.__infoLevelList.remove(level)
+
 
     def getTimeStringNow(self):
         return str(datetime.datetime.now().isoformat(sep=" ")) 
@@ -45,13 +57,18 @@ class Verboser:
     def printString(self, msg, typeString, colorCode):
         if self.withTime:
             string = typeString + " [" + self.getTimeStringNow() + "]: " + msg
+
         else:
             string = typeString + ": " + msg
 
         if self.inColor: 
             string = colorCode + string + self.termColor.RESET 
 
-        print(string)
+        if self.saveToHistory:
+            self.__messageHistoryStringList.append(string)
+            
+        else:
+            print(string)
 
 
     def success(self, msg):
@@ -68,7 +85,7 @@ class Verboser:
             if self.inColor:
                 string = self.termColor.RED + string + self.termColor.RESET 
 
-            eprint.eprint(string)
+            eprint(string)
             
 
     def warning(self, msg):
@@ -89,26 +106,20 @@ class Verboser:
         if level not in self.__debugLevelList:
             self.__debugLevelList.append(level)        
         
+
     def removeDebugLevel(self, level):
         self.__debugLevelList.remove(level) 
 
 
-if __name__ == "__main__":
-    verboser = Verboser()
+    def getMessageHistory(self):
+        return self.__messageHistoryStringList
+
+
+    def printMessageHistory(self):
+        for message in self.__messageHistoryStringList:
+            print(message)
     
-    verboser.enableError = True
-    verboser.inColor = True
-    verboser.withTime = True
-    verboser.addInfoLevel(0)
-    verboser.addInfoLevel(1)
-    verboser.error("This is an error") 
-    verboser.info("information about something")
-    verboser.info("hello", 1)
-    verboser.enableWarning = True
-    verboser.warning("warning") 
-    verboser.enableSuccess = True
-    verboser.success("yes it worked")
-    verboser.addDebugLevel(0)
-    verboser.debug("debuging")
-    verboser.removeInfoLevel(1)
-    verboser.info("hello?", 1)
+
+    def clearMessageHistory(self):
+        self.__messageHistoryStringList = [] 
+
