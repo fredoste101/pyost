@@ -85,8 +85,6 @@ def getBitFieldTable(bitFieldList):
 
     bitFieldHtmlStringList.append("<tr>")
 
-    changeRow = False
-
     remainingBitsInWord = WORD_SIZE 
 
     colorWheelIndex = 0

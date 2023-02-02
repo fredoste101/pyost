@@ -17,7 +17,7 @@ def main():
             if bitField < bitFieldContainerSize:
                 finalContainerSizeList.append(bitFieldContainerSize)    
                 isContainerSizeAdded = True 
-                break;
+                break
 
         if not isContainerSizeAdded:
             print("ERROR: bitField does not fit any given container size")

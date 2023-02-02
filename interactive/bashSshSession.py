@@ -85,7 +85,11 @@ class BashSSHSession:
 
 
     def __getCommandOutput(self):
-        outputList = self.ssh.before.split(self.newLineString)
+        if isinstance(self.ssh.before, bytes):
+            outputList = self.ssh.before.decode("utf-8").split(self.newLineString)
+
+        else:
+            outputList = str(self.ssh.before).split(self.newLineString)
 
         output = ""
 

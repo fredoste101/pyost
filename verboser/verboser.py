@@ -13,6 +13,8 @@ class Verboser:
         info and debug can be divided into levels (0, 1, 2,...) which must be enabled separetly. 
     """
 
+
+
     def __init__(self):
         self.__infoLevelList    = []        #to enable certain info-prints of given level, must add that level (int) to this list
         self.__debugLevelList   = []        #same as info but for debug
