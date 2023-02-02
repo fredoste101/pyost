@@ -5,41 +5,59 @@ from pyost.verboser.verboser import Verboser
 
 class VerboserTest(unittest.TestCase):
     def test_1(self):
-        verboser = Verboser()
-        verboser.enableError    = True
-        verboser.inColor        = True
-        verboser.withTime       = True
+        Verboser.enableError    = True
+        Verboser.inColor        = True
+        Verboser.withTime       = True
 
-        verboser.addInfoLevel(0)
-        verboser.addInfoLevel(1)
+        Verboser.addInfoLevel(0)
+        Verboser.addInfoLevel(1)
 
-        verboser.info("THIS IS A UNITTEST!", 0)
+        Verboser.info("THIS IS A UNITTEST!", 0)
 
-        verboser.error("This is an error") 
-        verboser.info("information about something")
-        verboser.info("hello", 1)
+        Verboser.error("This is an error") 
+        Verboser.info("information about something")
+        Verboser.info("hello", 1)
 
-        verboser.enableWarning  = True
-        verboser.warning("warning") 
+        Verboser.enableWarning  = True
+        Verboser.warning("warning") 
 
-        verboser.enableSuccess  = True
-        verboser.success("yes it worked")
+        Verboser.enableSuccess  = True
+        Verboser.success("yes it worked")
 
-        verboser.addDebugLevel(0)
-        verboser.debug("debugging")
+        Verboser.addDebugLevel(0)
+        Verboser.debug("debugging")
 
-        verboser.removeInfoLevel(1)
+        Verboser.removeInfoLevel(1)
 
-        verboser.info("I will not be printed", 1)
+        Verboser.info("I will not be printed", 1)
 
-        verboser.saveToHistory = True
+        Verboser.saveToHistory = True
         
-        verboser.info("This")
-        verboser.info("Is")
-        verboser.info("In")
-        verboser.info("History")
+        Verboser.info("This")
+        Verboser.info("Is")
         
-        verboser.printMessageHistory()
+        Verboser.info("In")
+        Verboser.info("History")
+        
+        Verboser.printMessageHistory()
+
+
+        Verboser.saveToHistory = False
+
+        Verboser.addInfoLevel("MYINFO")
+
+        Verboser.debug("Debug from verboser", "VERBOSER")
+
+        Verboser.addDebugLevel("VERBOSER")
+
+        Verboser.info("hello world", "MYINFO")
+        Verboser.debug("Debug from verboser", "VERBOSER")
+
+        Verboser.removeDebugLevel("VERBOSER")
+        Verboser.debug("Debug from verboser", "VERBOSER")
+
+        Verboser.removeInfoLevel("MYINFO")
+        Verboser.info("hello world", "MYINFO")
         
         self.assertTrue(True)
 

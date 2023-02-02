@@ -1,6 +1,6 @@
 
-from pyost.eprint.eprint import eprint
-from pyost.termColor.termColor import TermColor
+from ..eprint.eprint import eprint
+from ..termColor.termColor import TermColor
 
 import datetime
         
@@ -13,115 +13,173 @@ class Verboser:
         info and debug can be divided into levels (0, 1, 2,...) which must be enabled separetly. 
     """
 
+    __infoLevelSet    = set()           #to enable certain info-prints of given level, must add that level (int) to this list
+    __debugLevelSet   = set()           #same as info but for debug
 
+    enableError        = True           #Errors are enabled per default 
+    enableWarning      = False 
+    enableSuccess      = False
+    inColor            = False          #Print with color-codes
+    withTime           = True           #Each pring will include a isoformat time 
+    termColor          = TermColor()        
 
-    def __init__(self):
-        self.__infoLevelList    = []        #to enable certain info-prints of given level, must add that level (int) to this list
-        self.__debugLevelList   = []        #same as info but for debug
-
-        self.enableError        = True      #Errors are enabled per default 
-        self.enableWarning      = False 
-        self.enableSuccess      = False
-        self.inColor            = False     #Print with color-codes
-        self.withTime           = False     #Each pring will include a isoformat time 
-        self.termColor          = TermColor()        
-
-        self.saveToHistory      = False #If True will not print messages to terminal directly, but instead
+    saveToHistory      = False          #If True will not print messages to terminal directly, but instead
                                         #append them to a historyList, that can be printed later on.
-        self.__messageHistoryStringList = []
+    __messageHistoryStringList = []
 
-        self.__verboseDict = {} # "nameOfTrace": {"color":"<color>"}
+    __infoNameSet       = set()
+    __debugNameSet      = set()
+    __warningNameSet    = set()
+    __errorNameSet      = set()
 
+    __supressAll = False
+    
 
-    def addInfoLevel(self, level):
-        if type(level) != int:
-            raise Exception("level must be of type int")
-        
-        if level not in self.__infoLevelList:
-            self.__infoLevelList.append(level)
-
-
-    def removeInfoLevel(self, level):
-        if level in self.__infoLevelList:
-            self.__infoLevelList.remove(level)
+    @staticmethod
+    def supressAll():
+        Verboser.__supressAll = True
 
 
-    def getTimeStringNow(self):
+    @staticmethod
+    def unSupressAll():
+        Verboser.__supressAll = False
+
+
+    @staticmethod
+    def addInfoLevel(level):
+        if type(level) is int:
+            Verboser.__infoLevelSet.add(level)
+
+        elif type(level) is str:
+            Verboser.__infoNameSet.add(level)
+
+
+    @staticmethod
+    def removeInfoLevel(level):
+        if type(level) is int:
+            if level in Verboser.__infoLevelSet:
+                Verboser.__infoLevelSet.remove(level)
+
+        elif type(level) is str:
+            if level in Verboser.__infoNameSet:
+                Verboser.__infoNameSet.remove(level)
+
+
+    @staticmethod
+    def getTimeStringNow():
         return str(datetime.datetime.now().isoformat(sep=" ")) 
 
 
-    def info(self, msg, level=0):
-        for enabled in self.__infoLevelList:
-            if enabled == level:
-                self.printString(msg, "INFO" + str(level), self.termColor.BLUE)
+    @staticmethod
+    def info(msg, level=0):
+        if type(level) is int:
+            if level in Verboser.__infoLevelSet:
+                Verboser.printString(msg, "INFO" + str(level), Verboser.termColor.BLUE)
 
-          
-    def printString(self, msg, typeString, colorCode):
-        if self.withTime:
-            string = typeString + " [" + self.getTimeStringNow() + "]: " + msg
+        elif type(level) is str:
+            if level in Verboser.__infoNameSet:
+                Verboser.printString(msg, level + " INFO", Verboser.termColor.BLUE)
+
+    
+    @staticmethod
+    def printString(msg, typeString, colorCode):
+        if Verboser.__supressAll:
+            return
+
+        if Verboser.withTime:
+            string = typeString + " [" + Verboser.getTimeStringNow() + "]: " + msg
 
         else:
             string = typeString + ": " + msg
 
-        if self.inColor: 
-            string = colorCode + string + self.termColor.RESET 
+        if Verboser.inColor: 
+            string = colorCode + string + Verboser.termColor.RESET 
 
-        if self.saveToHistory:
-            self.__messageHistoryStringList.append(string)
+        if Verboser.saveToHistory:
+            Verboser.__messageHistoryStringList.append(string)
             
         else:
             print(string)
 
 
-    def success(self, msg):
-        if self.enableSuccess:
-            self.printString(msg, "SUCCESS", self.termColor.GREEN)
+    @staticmethod
+    def success(msg):
+        if Verboser.enableSuccess:
+            Verboser.printString(msg, "SUCCESS", Verboser.termColor.GREEN)
          
 
-    def error(self, msg):
-        if self.enableError:
-            string = "ERROR: " + msg
-            if self.withTime:
-                string = "ERROR [" + self.getTimeStringNow() + "]: " + msg
+    @staticmethod
+    def error(msg):
+        """
+            Prints an error. 
+            Error is printed to stderr
+        """
 
-            if self.inColor:
-                string = self.termColor.RED + string + self.termColor.RESET 
+        if Verboser.__supressAll:
+            return
+
+        if Verboser.enableError:
+            string = "ERROR: " + msg
+
+            if Verboser.withTime:
+                string = "ERROR [" + Verboser.getTimeStringNow() + "]: " + msg
+
+            if Verboser.inColor:
+                string = Verboser.termColor.RED + string + Verboser.termColor.RESET 
 
             eprint(string)
             
 
-    def warning(self, msg):
-        if self.enableWarning:
-            self.printString(msg, "WARNING", self.termColor.YELLOW) 
+    @staticmethod
+    def warning(msg):
+        if Verboser.enableWarning:
+            Verboser.printString(msg, "WARNING", Verboser.termColor.YELLOW) 
 
 
-    def debug(self, msg, level=0):
-        for enabled in self.__debugLevelList:
-            if enabled == level:
-                self.printString(msg, "DEBUG" + str(level), self.termColor.MAGENTA)
+    @staticmethod
+    def debug(msg, level=0):
+        if type(level) is int:
+            if level in Verboser.__debugLevelSet:
+                    Verboser.printString(msg, "DEBUG" + str(level), Verboser.termColor.MAGENTA)
+
+        elif type(level) is str:
+            if level in Verboser.__debugNameSet:
+                    Verboser.printString(msg, level + " DEBUG", Verboser.termColor.MAGENTA)
 
 
-    def addDebugLevel(self, level):
-        if type(level) != int:
-            raise Exception("level must be of int type")
+    @staticmethod
+    def addDebugLevel(level):
+        if type(level) is int:
+            Verboser.__debugLevelSet.add(level)
 
-        if level not in self.__debugLevelList:
-            self.__debugLevelList.append(level)        
+        elif type(level) is str:
+            Verboser.__debugNameSet.add(level)
         
 
-    def removeDebugLevel(self, level):
-        self.__debugLevelList.remove(level) 
+    @staticmethod
+    def removeDebugLevel(level):
+        if type(level) is int:
+            if level in Verboser.__debugLevelSet:
+                Verboser.__debugLevelSet.remove(level)
+
+        elif type(level) is str:
+            if level in Verboser.__debugNameSet:
+                Verboser.__debugNameSet.remove(level)
+         
 
 
-    def getMessageHistory(self):
-        return self.__messageHistoryStringList
+    @staticmethod
+    def getMessageHistory():
+        return Verboser.__messageHistoryStringList
 
 
-    def printMessageHistory(self):
-        for message in self.__messageHistoryStringList:
+    @staticmethod
+    def printMessageHistory():
+        for message in Verboser.__messageHistoryStringList:
             print(message)
     
 
-    def clearMessageHistory(self):
-        self.__messageHistoryStringList = [] 
+    @staticmethod
+    def clearMessageHistory():
+        Verboser.__messageHistoryStringList = [] 
 
