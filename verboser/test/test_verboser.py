@@ -8,6 +8,7 @@ class VerboserTest(unittest.TestCase):
         Verboser.enableError    = True
         Verboser.inColor        = True
         Verboser.withTime       = True
+        Verboser.withCalleInfo = True
 
         Verboser.addInfoLevel(0)
         Verboser.addInfoLevel(1)
@@ -50,12 +51,15 @@ class VerboserTest(unittest.TestCase):
 
         Verboser.addDebugLevel("VERBOSER")
 
+        
         Verboser.info("hello world", "MYINFO")
         Verboser.debug("Debug from verboser", "VERBOSER")
+
 
         Verboser.removeDebugLevel("VERBOSER")
         Verboser.debug("Debug from verboser", "VERBOSER")
 
+        
         Verboser.removeInfoLevel("MYINFO")
         Verboser.info("hello world", "MYINFO")
         

@@ -3,6 +3,8 @@ from ..eprint.eprint import eprint
 from ..termColor.termColor import TermColor
 
 import datetime
+
+import inspect
         
 
 class Verboser:
@@ -22,6 +24,8 @@ class Verboser:
     inColor            = False          #Print with color-codes
     withTime           = True           #Each pring will include a isoformat time 
     termColor          = TermColor()        
+
+    withCalleInfo      = False
 
     saveToHistory      = False          #If True will not print messages to terminal directly, but instead
                                         #append them to a historyList, that can be printed later on.
@@ -72,25 +76,42 @@ class Verboser:
 
     @staticmethod
     def info(msg, level=0):
+
         if type(level) is int:
             if level in Verboser.__infoLevelSet:
-                Verboser.printString(msg, "INFO" + str(level), Verboser.termColor.BLUE)
+                Verboser.printString(msg, 
+                                     "INFO" + str(level), 
+                                     Verboser.termColor.BLUE)
 
         elif type(level) is str:
             if level in Verboser.__infoNameSet:
                 Verboser.printString(msg, level + " INFO", Verboser.termColor.BLUE)
 
-    
+        else:
+            raise Exception("Non allowed type: " + str(type(level)))
+
+
     @staticmethod
-    def printString(msg, typeString, colorCode):
+    def printString(msg, typeString, colorCode, stderr=False):
+
         if Verboser.__supressAll:
             return
 
-        if Verboser.withTime:
-            string = typeString + " [" + Verboser.getTimeStringNow() + "]: " + msg
+        stringList = []
 
-        else:
-            string = typeString + ": " + msg
+        stringList.append(typeString)
+
+        if Verboser.withTime:
+            stringList.append(" [" + Verboser.getTimeStringNow() + "]")
+
+        if Verboser.withCalleInfo:
+            callerInfo = inspect.getframeinfo(inspect.stack()[2][0])
+            stringList.append(" " + callerInfo.filename + ":" + callerInfo.function + ":" + str(callerInfo.lineno))
+
+
+        stringList.append(": " + msg)
+
+        string = "".join(stringList)
 
         if Verboser.inColor: 
             string = colorCode + string + Verboser.termColor.RESET 
@@ -99,7 +120,10 @@ class Verboser:
             Verboser.__messageHistoryStringList.append(string)
             
         else:
-            print(string)
+            if stderr:
+                eprint(string)
+            else:
+                print(string)
 
 
     @staticmethod
@@ -115,21 +139,10 @@ class Verboser:
             Error is printed to stderr
         """
 
-        if Verboser.__supressAll:
-            return
-
         if Verboser.enableError:
-            string = "ERROR: " + msg
+            Verboser.printString(msg, "ERROR", Verboser.termColor.RED, stderr=True)
 
-            if Verboser.withTime:
-                string = "ERROR [" + Verboser.getTimeStringNow() + "]: " + msg
-
-            if Verboser.inColor:
-                string = Verboser.termColor.RED + string + Verboser.termColor.RESET 
-
-            eprint(string)
             
-
     @staticmethod
     def warning(msg):
         if Verboser.enableWarning:
