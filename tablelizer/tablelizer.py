@@ -1,4 +1,6 @@
 
+from itertools import zip_longest
+
 class Tablelizer(object):
     """
         Class for turning a list of lists (matrix)
@@ -8,60 +10,93 @@ class Tablelizer(object):
     def __init__(self):
         self.headerList     = []
         self.dataRowList    = []
-        self.margin = 2
-        self.terminalConfig =   {
-                                    "columnMarginSize":1, 
-                                    "rowSeparatorChar":"-", 
-                                    "cornerChar":"+", 
-                                    "columnSeparatorChar":"|",
-                                    "align":"left",
-                                    "header":True,
-                                    "plain":False
-                                }
 
-        self.maxSizeList = []
+        self.maxColumnWidthList = []
 
-
-    def setMaxSizeList(self):
-        self.maxSizeList = []
-        numColumns = len(self.headerList)
-
-        for index in range(numColumns):
-            self.maxSizeList.append(0)
-
-        for index, header in enumerate(self.headerList):
-            if len(header) > self.maxSizeList[index]:
-                self.maxSizeList[index] = len(header)
-
-        for row in self.dataRowList:
-            for index, column in enumerate(row):
-                if len(column) > self.maxSizeList[index]:
-                    self.maxSizeList[index] = len(column)
 
 
 class TablelizerTerminal(Tablelizer):
+
     def __init__(self):
+
         super(TablelizerTerminal, self).__init__()
+
         self.config = {
-                            "columnMarginSize":1, 
-                            "rowSeparatorChar":"-", 
-                            "cornerChar":"+", 
-                            "columnSeparatorChar":"|",
-                            "align":"left",
-                            "header":True,
-                            "plain":False
+                            "columnMarginSize":     1, 
+                            "rowSeparatorChar":     "-", 
+                            "cornerChar":           "+", 
+                            "columnSeparatorChar":  "|",
+                            "align":                "right", #{left, center, right}
+                            "header":               True,
+                            "plain":                False #No formatting ascii at all
                       }
 
+        self.columnConfig = []
+
+
+    def __lineyfy(self, stringList):
+        """
+            Turn a list of strings, into a list of list of strings,
+            split on \n. Basically turns each string into a list of lines
+        """
+        linesList = []
+
+        for string in stringList:
+            linesList.append(string.split("\n"))
+
+        return linesList
+            
+        
+
+    def __setMaxSizeList(self):
+
+        self.maxColumnWidthList = []
+
+        numColumns = len(self.headerList)
+
+        for index in range(numColumns):
+            self.maxColumnWidthList.append(0)
+
+        #TODO: incorporate \n so to check max column size with newlines included
+        #MAYBETODO: make it posssible to define some chars not to count, I.E Terminal codes for colors :D
+
+
+
+        for index, header in enumerate(self.headerList):
+            
+            if len(header) > self.maxColumnWidthList[index]:
+                self.maxColumnWidthList[index] = len(header)
+
+        for row in self.dataRowList:
+            for index, column in enumerate(row):
+                columnLength = self.__getStringColumnWidth(column)
+
+                if columnLength > self.maxColumnWidthList[index]:
+                    self.maxColumnWidthList[index] = columnLength
     
+
+    def __getStringColumnWidth(self, string):
+        stringRows = string.split("\n")
+
+        maxSize = 0
+
+        for row in stringRows:
+            if len(row) > maxSize:
+                maxSize = len(row)
+
+        return maxSize
+
+
     def getString(self):
         """
             Get string for terminal output.
         """
+
+        #TODO: check that header and each row have the same number of columns
+
         tableStringList = []
 
-        self.setMaxSizeList()
-
-        
+        self.__setMaxSizeList()
 
         if self.config["header"]:
             tableStringList.append(self.getRowSeparatorString())
@@ -75,6 +110,25 @@ class TablelizerTerminal(Tablelizer):
         return "".join(tableStringList)
 
 
+    def __getAlignedString(self, string, size):
+        """
+            Align string based on "align" attribute in config.
+            Also add margin on each side, based on "columnMarginSize" attribute.
+        """
+        alignedString = ""
+
+        if self.config["align"] == "left":
+            alignedString = string.ljust(size)
+
+        elif self.config["align"] == "right":
+            alignedString = string.rjust(size)
+
+        elif self.config["align"] == "center":
+            alignedString = string.center(size)
+
+        return self.config["columnMarginSize"] * " " + alignedString + self.config["columnMarginSize"] * " "
+
+
     def getHeaderString(self):
         headerRowStringList = []
 
@@ -85,23 +139,12 @@ class TablelizerTerminal(Tablelizer):
 
         headerRowStringList.append(separatorChar)
 
-        for header, size in zip(self.headerList, self.maxSizeList):
-            fillerLeft  = ""
-            fillerRight = ""
-            
-            if self.config["align"] == "left":
-                fillerRight = " " * (size - len(header))
-            elif self.config["align"] == "right":
-                fillerLeft  = " " * (size - len(header))
-            elif self.config["align"] == "center":
-                fillerRight = " " * (((size - len(header))/2))
-                fillerLeft  = fillerRight
+        for header, size in zip(self.headerList, self.maxColumnWidthList):
 
-            
+            alignedString = self.__getAlignedString(header, size)
 
-            headerRowStringList.append(" " * self.config["columnMarginSize"] + fillerLeft + 
-                                       header + 
-                                       fillerRight + " " * self.config["columnMarginSize"] + separatorChar)
+            headerRowStringList.append(alignedString)
+            headerRowStringList.append(separatorChar)
 
         return "".join(headerRowStringList) + "\n"
 
@@ -115,29 +158,36 @@ class TablelizerTerminal(Tablelizer):
             separatorChar = ""
 
         for row in self.dataRowList:
+        
+            lineList = self.__lineyfy(row)
+
+            for stringTuple in zip_longest(*lineList):
+
+                dataRowStringList.append(separatorChar)
+
+                for data, size in zip(stringTuple, self.maxColumnWidthList):
+                    if data == None:
+                        alignedString = self.__getAlignedString("", size)
+
+                        dataRowStringList.append(alignedString)
+                        dataRowStringList.append(separatorChar)
+                    else:
+                        alignedString = self.__getAlignedString(data, size)
+
+                        dataRowStringList.append(alignedString)
+                        dataRowStringList.append(separatorChar)
+
+                dataRowStringList.append("\n")
             
-            dataRowStringList.append(separatorChar)
-            for data, size in zip(row, self.maxSizeList):
-                fillerLeft  = ""
-                fillerRight = ""
-            
-                if self.config["align"] == "left":
-                    fillerRight = " " * (size - len(data))
-                elif self.config["align"] == "right":
-                    fillerLeft  = " " * (size - len(data))
-                elif self.config["align"] == "center":
-                    fillerRight = " " * (((size - len(data)) / 2))
-                    fillerLeft  = fillerRight
 
+            #for data, size in zip(row, self.maxColumnWidthList):
 
-                
+            #    alignedString = self.__getAlignedString(data, size)
 
-                dataRowStringList.append(" " * self.config["columnMarginSize"] + fillerLeft + data + fillerRight + 
-                                       " " * self.config["columnMarginSize"] + separatorChar)
+            #    dataRowStringList.append(alignedString)
+            #    dataRowStringList.append(separatorChar)
 
-
-            dataRowStringList.append("\n" + self.getRowSeparatorString())
-
+            dataRowStringList.append(self.getRowSeparatorString())
 
         return "".join(dataRowStringList)
 
@@ -150,7 +200,7 @@ class TablelizerTerminal(Tablelizer):
 
         rowSeparatorStringList.append(self.config["cornerChar"])
 
-        for size in self.maxSizeList:
+        for size in self.maxColumnWidthList:
             rowSeparatorStringList.append(((size + self.config["columnMarginSize"] * 2) * self.config["rowSeparatorChar"]) + 
                                           self.config["cornerChar"])
 
@@ -239,9 +289,11 @@ class TablelizerHtml(Tablelizer):
 
 
 class TablelizerMediaWiki(Tablelizer):
+
     def __init__(self):
         super(TablelizerMediaWiki, self).__init__()
         self.classList = ["wikitable"]
+
 
     def getString(self):
         tableStringList = []
